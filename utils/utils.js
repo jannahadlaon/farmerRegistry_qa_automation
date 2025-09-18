@@ -181,3 +181,18 @@ export async function clickRandomGroup(page, tableSelector = 'table.o_list_table
     return rowText;
 }
 
+export async function generateRandomAddNCsv(templatePath, outputPath) {
+  const data = await fs.readFile(templatePath, { encoding: 'utf-8' });
+  const lines = data.split('\n');
+  if (lines.length < 2) throw new Error('CSV template must have at least one data row');
+  let headers = lines[0].split(',');
+  const randomHeader = faker.string.alpha({ length: 8 }); // random header name
+  const addNIndex = headers.indexOf('additional_name');
+  if (addNIndex === -1) throw new Error('Header must contain additional_name');
+  headers[addNIndex] = randomHeader;
+  const newHeaderLine = headers.join(',');
+  const newCsv = [newHeaderLine, lines[1]].join('\n');
+  await fs.writeFile(outputPath, newCsv, 'utf-8');
+  return outputPath;
+}
+

@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
-import { loginAsFarmerAdmin, enableDevMode, generateCSV } from '../utils/utils.js';
+import { loginAsFarmerAdmin, enableDevMode, generateCSV, generateRandomAddNCsv } from '../utils/utils.js';
 
 test('Import Individual to Farmer Registry', async ({ browser }) => {
   test.setTimeout(200000); 
@@ -178,11 +178,15 @@ test('Error Handling: To import, select a field', async ({ browser }) => {
   await page.getByRole('menuitem', { name: 'Individuals' }).click();
   await page.locator('[data-tooltip="Actions"]').click();
   await page.getByRole('menuitem', { name: 'Import records' }).click();
+  // Generate a new CSV with random addN
+  const templatePath = 'files/ToImportSelected.csv';
+  const outputPath = `uploads/ToImportSelected_${Date.now()}.csv`;
+  await generateRandomAddNCsv(templatePath, outputPath);
   const [fileChooser] = await Promise.all([
     page.waitForEvent('filechooser'),
     page.getByRole('button', { name: 'Upload File' }).click(),
   ]);
-  await fileChooser.setFiles('files/ToImportSelected.csv');
+  await fileChooser.setFiles(outputPath);
   await expect(page.getByRole('button', { name: 'Test' })).toBeVisible();
   await page.getByRole('button', { name: 'Test' }).click();
   // Locate the alert role and check for the first error message.
