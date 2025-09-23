@@ -196,3 +196,36 @@ export async function generateRandomAddNCsv(templatePath, outputPath) {
   return outputPath;
 }
 
+export async function NewUserLogin(page) {
+  await page.locator('button[data-hotkey="h"]').click();
+  await page.getByRole('menuitem', { name: 'Settings' }).click();
+  await page.locator('[searchabletext="Manage Users"]').waitFor({ state: 'visible' });
+  await page.locator('[searchabletext="Manage Users"]').click();
+  await page.getByRole('button', { name: 'New' }).click();
+  const name = faker.person.firstName();
+  const lastName = faker.person.lastName();
+  const fullName = `${name} ${lastName}`;
+  const email = `${name}${faker.string.numeric({ length: 4 })}`;
+  const password = faker.internet.password({ length: 10 });
+  console.log(`Generated Full Name: Name: ${fullName}`);
+  console.log(`Generated Email: ${email}`);
+  console.log(`Generated Password: ${password}`);
+  await page.getByPlaceholder('e.g. John Doe').fill(fullName);
+  await page.getByPlaceholder('e.g. email@yourcompany.com').fill(email);
+  await page.getByLabel('Save manually').click();
+  await page.getByRole('tab', { name: 'Access Rights' }).click();
+  await page.locator('#in_group_81_0').check(); //Set to user as Program Manager
+  // Set password
+  await page.locator('i[data-tooltip="Actions"]').click();
+  await page.getByRole('menuitem', { name: 'Change Password' }).click();
+  await page.getByRole('row', { name: email }).getByRole('cell').nth(2).click();
+  await page.locator('input[type="password"]').fill(password);
+  await page.getByRole('button', { name: 'Change Password' }).click();
+  await page.getByRole('img', { name: 'User' }).click();
+  await page.getByRole('menuitem', { name: 'Log out' }).click();
+  // Login as new user
+  await page.getByPlaceholder('Email').fill(email);
+  await page.getByPlaceholder('Password').fill(password);
+  await page.getByPlaceholder('Password').press('Enter');
+
+}

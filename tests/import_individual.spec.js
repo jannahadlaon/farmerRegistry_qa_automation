@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs/promises';
-import { loginAsFarmerAdmin, enableDevMode, generateCSV, generateRandomAddNCsv } from '../utils/utils.js';
+import { loginAsFarmerAdmin, enableDevMode, generateCSV, generateRandomAddNCsv, NewUserLogin } from '../utils/utils.js';
 
 test('Import Individual to Farmer Registry', async ({ browser }) => {
   test.setTimeout(200000); 
@@ -140,6 +140,7 @@ test('Error Handling: No matching records found', async ({ browser }) => {
 });
 
 test('Error Handling: Column contains incorrect values', async ({ browser }) => {
+  test.setTimeout(200000);
   const page = await loginAsFarmerAdmin(browser);
   await expect(page.getByRole('menuitem', { name: 'Individuals' })).toBeVisible();
   await page.getByRole('menuitem', { name: 'Individuals' }).click();
@@ -173,6 +174,7 @@ test('Error Handling: Column contains incorrect values', async ({ browser }) => 
 });
 
 test('Error Handling: To import, select a field', async ({ browser }) => {
+  test.setTimeout(200000); 
   const page = await loginAsFarmerAdmin(browser);
   await expect(page.getByRole('menuitem', { name: 'Individuals' })).toBeVisible();
   await page.getByRole('menuitem', { name: 'Individuals' }).click();
@@ -202,6 +204,27 @@ test('Error Handling: To import, select a field', async ({ browser }) => {
   console.log('Import successful');
 });
 
-//Need to work on anything BELLOW
-test('Error Handling: not allowed to access Import Matching', async ({ browser }) => {
+test('Error Handling: Wrong access rights permissions', async ({ browser }) => {
+  test.setTimeout(200000); 
+  const page = await loginAsFarmerAdmin(browser);
+  await enableDevMode(page);
+  await NewUserLogin(page);
+  await page.waitForLoadState('networkidle'); // Wait for page resources to finish loading
+  await expect(page.getByRole('menuitem', { name: 'Individuals' })).toBeVisible({ timeout: 15000 });
+  await page.getByRole('menuitem', { name: 'Individuals' }).click();
+  await page.locator('[data-tooltip="Actions"]').click();
+  await page.getByRole('menuitem', { name: 'Import records' }).click();
+  const [fileChooser] = await Promise.all([
+    page.waitForEvent('filechooser'),
+    page.getByRole('button', { name: 'Upload File' }).click(),
+  ]);
+  await fileChooser.setFiles('files/ImportIndividuals.csv');
+  await expect(page.getByRole('button', { name: 'Test' })).toBeVisible();
+  await page.getByRole('button', { name: 'Test' }).click();
+  // Locate the alert role and check for the first error message.
+  const errorContainer = page.locator('div.border-bottom');
+  await expect(errorContainer).toContainText('Found more than 10 errors');
+  await expect(errorContainer).toContainText('You are not allowed to create');
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  console.log('Import cancelled');
 });
